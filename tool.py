@@ -1,5 +1,4 @@
-import boto3
-import sys
+import boto3, botocore
 from tree_menu import TreeMenu
 from iam_role_manager import IAMRoleManager
 import time
@@ -19,21 +18,29 @@ class Regions:
 
 class Bedrock:
     def __init__(self, region="us-east-1"):
-        self.bedrock = boto3.client(service_name="bedrock", region_name=region,)
+        self.bedrock = boto3.client(service_name="bedrock", region_name=region)
+        self.region = region
 
     def foundation_models(self):
-        response = self.bedrock.list_foundation_models(
-            byInferenceType='ON_DEMAND'
-        )
-        model_list = []
-        for model in response.get('modelSummaries', []):
-            model_list.append({
-                'label': model.get('modelName', ''),
-                'value': model.get('modelArn', ''),
-                'groupName': model.get('providerName', '')  # Changed 'provider' to 'providerName'
-            })
-        return model_list
-    
+        try:
+            response = self.bedrock.list_foundation_models(
+                byInferenceType='ON_DEMAND'
+            )
+            model_list = []
+            for model in response.get('modelSummaries', []):
+                model_list.append({
+                    'label': model.get('modelName', ''),
+                    'value': model.get('modelArn', ''),
+                    'groupName': model.get('providerName', '')
+                })
+            return model_list
+        except botocore.exceptions.EndpointConnectionError:
+            print(f"\nSorry, Bedrock is not available in the {self.region} region.")
+            return None
+        except Exception as e:
+            print(f"\nAn error occurred while fetching Bedrock models: {str(e)}")
+            return None
+
 def main():
     # Select region
     regions = Regions.list()
@@ -92,10 +99,14 @@ def main():
     
     #########################################################
 
-
     # Select Bedrock models
+    foundation_models = bedrock.foundation_models()
+    if foundation_models is None:
+        print("Exiting due to Bedrock unavailability.")
+        return
+
     model_menu = TreeMenu(
-        bedrock.foundation_models(),
+        foundation_models,
         include_all=True,
         title=f"Region: {selected_region[0]}",
         question="Select one or more foundation models:"
@@ -164,10 +175,19 @@ def main():
         print(f"set AWS_SECRET_ACCESS_KEY={temp_credentials['SecretAccessKey']}")
         print(f"set AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n") 
         
+        print("\nFor Windows (PowerShell):")
+        print(f"$env:AWS_ACCESS_KEY_ID = '{temp_credentials['AccessKeyId']}'")
+        print(f"$env:AWS_SECRET_ACCESS_KEY = '{temp_credentials['SecretAccessKey']}'")
+        print(f"$env:AWS_SESSION_TOKEN = '{temp_credentials['SessionToken']}'\n")
+
         print("\nFor macOS/Linux (Bash):")
         print(f"export AWS_ACCESS_KEY_ID={temp_credentials['AccessKeyId']}")
         print(f"export AWS_SECRET_ACCESS_KEY={temp_credentials['SecretAccessKey']}")
         print(f"export AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n")
+
+        print("\nPlease ensure that access has been granted to the Amazon Bedrock models you need in the region you're working in:")
+        print(f"https://{selected_region[0]}.console.aws.amazon.com/bedrock/home?region={selected_region[0]}#/modelaccess\n")
+
     else:
         print("\nFailed to generate temporary credentials after multiple attempts.")
 
