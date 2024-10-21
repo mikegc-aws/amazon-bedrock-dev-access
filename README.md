@@ -11,6 +11,7 @@ The script in this repository automates the process of generating temporary cred
 Follow these steps to run the script using AWS CloudShell:
 
 1. Open AWS CloudShell in your AWS Management Console.
+![Amazon Bedrock Developer Access](images/ab_dev_image_1.png)
 
 1. Clone this repository:
    ```
@@ -26,6 +27,22 @@ Follow these steps to run the script using AWS CloudShell:
    ```
    python tool.py
    ```
+
+
+![Amazon Bedrock Developer Access](images/ab_dev_image_2.png)
+
+
+![Amazon Bedrock Developer Access](images/ab_dev_image_3.png)
+
+
+![Amazon Bedrock Developer Access](images/ab_dev_image_4.png)
+
+
+![Amazon Bedrock Developer Access](images/ab_dev_image_5.png)
+
+(Access keys are temporary and will expire.)
+
+5. You can now use the temporary credentials to access Bedrock models. Paste the credentials into the terminal where you are running for your test code.
 
 ## What the Script Does
 
