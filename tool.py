@@ -58,15 +58,16 @@ def main():
     print(f"\nSelected region: {selected_region[0]}")
     print(f"Selected models: {selected_models}")
 
-    # Create IAM role with access to selected models
-    iam_manager = IAMRoleManager()
-    role_name = "BedrockAccessDeveloperRole"
-
-    # Get the current user's ARN
+    # Get the current user's ARN and extract the username
     sts_client = boto3.client('sts', region_name=selected_region[0])
     user_arn = sts_client.get_caller_identity()["Arn"]
+    username = user_arn.split('/')[-1]  # Extract username from ARN
+
+    # Create a custom role name including the username
+    role_name = f"BedrockDeveloperAccess-{username}-Role"
 
     # Check if the role already exists
+    iam_manager = IAMRoleManager()
     existing_role = iam_manager.get_role(role_name)
     if existing_role:
         overwrite = input(f"The role '{role_name}' already exists. Do you want to overwrite it? (y/n): ").lower().strip()
@@ -95,19 +96,19 @@ def main():
         print(f"Access Key ID: {temp_credentials['AccessKeyId']}")
         print(f"Secret Access Key: {temp_credentials['SecretAccessKey']}")
         print(f"Session Token: {temp_credentials['SessionToken']}")
-        print(f"Expiration: {temp_credentials['Expiration']}")
+        print(f"Expiration: {temp_credentials['Expiration']}\n")
         
         # Add commands for setting environment variables
         print("\nCommands to set environment variables:")
         print("\nFor Windows (Command Prompt):")
         print(f"set AWS_ACCESS_KEY_ID={temp_credentials['AccessKeyId']}")
         print(f"set AWS_SECRET_ACCESS_KEY={temp_credentials['SecretAccessKey']}")
-        print(f"set AWS_SESSION_TOKEN={temp_credentials['SessionToken']}")
+        print(f"set AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n")
         
         print("\nFor macOS/Linux (Bash):")
         print(f"export AWS_ACCESS_KEY_ID={temp_credentials['AccessKeyId']}")
         print(f"export AWS_SECRET_ACCESS_KEY={temp_credentials['SecretAccessKey']}")
-        print(f"export AWS_SESSION_TOKEN={temp_credentials['SessionToken']}")
+        print(f"export AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n")
     else:
         print("\nFailed to generate temporary credentials.")
 
