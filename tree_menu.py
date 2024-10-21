@@ -2,12 +2,14 @@ import curses
 from collections import defaultdict
 
 class TreeMenu:
-    def __init__(self, items, include_all=False, title=None, question=None):
+    def __init__(self, items, include_all=False, title=None, question=None, single_select=False):
         self.providers = defaultdict(list)
         self.use_groups = False
         self.include_all = include_all
         self.title = title
         self.question = question
+        self.single_select = single_select
+        self.selected_item = None  # For single selection mode
         for item in items:
             if 'groupName' in item:
                 self.use_groups = True
@@ -67,7 +69,10 @@ class TreeMenu:
                 label = f"{selection_indicator}{prefix}{item}"[:width-4]
             else:
                 label = item['label'][:width-8]
-                selection_indicator = '*' if item['value'] in self.selected_items else ' '
+                if self.single_select:
+                    selection_indicator = '*' if item['value'] == self.selected_item else ' '
+                else:
+                    selection_indicator = '*' if item['value'] in self.selected_items else ' '
                 label = f"{selection_indicator} {label}"
                 if self.use_groups and item_type != 'all':
                     label = f"    {label}"
@@ -106,45 +111,58 @@ class TreeMenu:
                 if flat_menu[self.current_selection][0] == 'provider':
                     self.expanded.discard(flat_menu[self.current_selection][1])
             elif key == ord(' '):
-                if flat_menu[self.current_selection][0] == 'provider':
-                    group = flat_menu[self.current_selection][1]
-                    if group in self.selected_groups:
-                        self.selected_groups.remove(group)
-                        for model in self.providers[group]:
-                            self.selected_items.discard(model['value'])
-                    else:
-                        self.selected_groups.add(group)
-                        for model in self.providers[group]:
-                            self.selected_items.add(model['value'])
-                elif flat_menu[self.current_selection][0] in ['model', 'all']:
-                    item = flat_menu[self.current_selection][1]
-                    if item['value'] == '*':
-                        if '*' in self.selected_items:
-                            self.selected_items.clear()
-                            self.selected_groups.clear()
-                        else:
-                            self.selected_items = set('*')
-                            self.selected_groups = set(self.providers.keys())
-                    else:
-                        if item['value'] in self.selected_items:
-                            self.selected_items.remove(item['value'])
-                            if 'groupName' in item:
-                                if all(m['value'] not in self.selected_items for m in self.providers[item['groupName']]):
-                                    self.selected_groups.discard(item['groupName'])
-                        else:
-                            self.selected_items.add(item['value'])
-                            if 'groupName' in item:
-                                if all(m['value'] in self.selected_items for m in self.providers[item['groupName']]):
-                                    self.selected_groups.add(item['groupName'])
-                        self.selected_items.discard('*')
-                        self.selected_groups.discard('*')
-            elif key in [curses.KEY_ENTER, ord('\n')]:
-                if self.selected_items:
-                    return list(self.selected_items)
+                if self.single_select:
+                    if flat_menu[self.current_selection][0] in ['model', 'all']:
+                        item = flat_menu[self.current_selection][1]
+                        self.selected_item = item['value']
                 else:
-                    stdscr.addstr(height-1, 0, "Please select at least one option (Use the arrow keys to navigate, then select with space).", curses.A_REVERSE)
-                    stdscr.refresh()
-                    stdscr.getch()
+                    if flat_menu[self.current_selection][0] == 'provider':
+                        group = flat_menu[self.current_selection][1]
+                        if group in self.selected_groups:
+                            self.selected_groups.remove(group)
+                            for model in self.providers[group]:
+                                self.selected_items.discard(model['value'])
+                        else:
+                            self.selected_groups.add(group)
+                            for model in self.providers[group]:
+                                self.selected_items.add(model['value'])
+                    elif flat_menu[self.current_selection][0] in ['model', 'all']:
+                        item = flat_menu[self.current_selection][1]
+                        if item['value'] == '*':
+                            if '*' in self.selected_items:
+                                self.selected_items.clear()
+                                self.selected_groups.clear()
+                            else:
+                                self.selected_items = set('*')
+                                self.selected_groups = set(self.providers.keys())
+                        else:
+                            if item['value'] in self.selected_items:
+                                self.selected_items.remove(item['value'])
+                                if 'groupName' in item:
+                                    if all(m['value'] not in self.selected_items for m in self.providers[item['groupName']]):
+                                        self.selected_groups.discard(item['groupName'])
+                            else:
+                                self.selected_items.add(item['value'])
+                                if 'groupName' in item:
+                                    if all(m['value'] in self.selected_items for m in self.providers[item['groupName']]):
+                                        self.selected_groups.add(item['groupName'])
+                            self.selected_items.discard('*')
+                            self.selected_groups.discard('*')
+            elif key in [curses.KEY_ENTER, ord('\n')]:
+                if self.single_select:
+                    if self.selected_item:
+                        return [self.selected_item]
+                    else:
+                        stdscr.addstr(height-1, 0, "Please select one option (Use the arrow keys to navigate, then select with space).", curses.A_REVERSE)
+                        stdscr.refresh()
+                        stdscr.getch()
+                else:
+                    if self.selected_items:
+                        return list(self.selected_items)
+                    else:
+                        stdscr.addstr(height-1, 0, "Please select at least one option (Use the arrow keys to navigate, then select with space).", curses.A_REVERSE)
+                        stdscr.refresh()
+                        stdscr.getch()
             
             self.display(stdscr)
 

@@ -7,7 +7,7 @@ class IAMRoleManager:
         self.iam = boto3.client('iam')
         self.sts = boto3.client('sts')
 
-    def create_bedrock_access_role(self, role_name, user_arn, arns):
+    def create_bedrock_access_role(self, role_name, user_arn, arns, duration_seconds):
         trust_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -24,7 +24,8 @@ class IAMRoleManager:
         try:
             response = self.iam.create_role(
                 RoleName=role_name,
-                AssumeRolePolicyDocument=json.dumps(trust_policy)
+                AssumeRolePolicyDocument=json.dumps(trust_policy),
+                MaxSessionDuration=duration_seconds
             )
             
             role_arn = response['Role']['Arn']
@@ -70,8 +71,7 @@ class IAMRoleManager:
             }
         
         except ClientError as e:
-            print(f"Error generating temporary credentials: {e}")
-            return None
+            raise  # Re-raise the caught exception
 
     def get_role(self, role_name):
         try:
@@ -101,7 +101,7 @@ class IAMRoleManager:
             ]
         }
 
-    def update_bedrock_access_role(self, role_name, user_arn, selected_models):
+    def update_bedrock_access_role(self, role_name, user_arn, selected_models, duration_seconds):
         try:
             # Update trust relationship
             trust_policy = {
@@ -115,6 +115,8 @@ class IAMRoleManager:
                 ]
             }
             self.iam.update_assume_role_policy(RoleName=role_name, PolicyDocument=json.dumps(trust_policy))
+
+            self.iam.update_role(RoleName=role_name, MaxSessionDuration=duration_seconds)
 
             # Create and attach new policy
             policy_document = self._create_policy_document(selected_models)
