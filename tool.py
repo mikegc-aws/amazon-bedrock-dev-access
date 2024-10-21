@@ -103,7 +103,7 @@ def main():
         print("\nFor Windows (Command Prompt):")
         print(f"set AWS_ACCESS_KEY_ID={temp_credentials['AccessKeyId']}")
         print(f"set AWS_SECRET_ACCESS_KEY={temp_credentials['SecretAccessKey']}")
-        print(f"set AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n")
+        print(f"set AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n") 
         
         print("\nFor macOS/Linux (Bash):")
         print(f"export AWS_ACCESS_KEY_ID={temp_credentials['AccessKeyId']}")
