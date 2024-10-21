@@ -185,7 +185,7 @@ def main():
         print(f"export AWS_SECRET_ACCESS_KEY={temp_credentials['SecretAccessKey']}")
         print(f"export AWS_SESSION_TOKEN={temp_credentials['SessionToken']}\n")
 
-        print("\nPlease ensure that access has been granted to the Amazon Bedrock models you need in the region you're working in:")
+        print("\n!! Please ensure that access has been granted to the Amazon Bedrock models you need in the region you're working in:")
         print(f"https://{selected_region[0]}.console.aws.amazon.com/bedrock/home?region={selected_region[0]}#/modelaccess\n")
 
     else:
