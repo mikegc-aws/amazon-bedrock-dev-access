@@ -1,5 +1,11 @@
 # Amazon Bedrock Developer Access
 
+_**Running an Amazon Bedrock code sample?**_
+
+_**Need access to Bedrock on your local machine?**_ 
+
+_**Use this tool in AWS CloudShell to generate temporary credentials for access to Bedrock models.**_
+
 This repository contains a Python script to help developers quickly set up and test their access to Amazon Bedrock models.
 
 ## Overview
